@@ -1,5 +1,5 @@
 # 
-# Documentación de Constantes 🎉:
+# Documentación de Constantes 🎉
 
 - <h3 style = "color: green">UBL_NAMESPACE</h3>
 

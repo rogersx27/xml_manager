@@ -1,0 +1,4 @@
+*.xml
+*.csv
+__pycache__
+querys.txt

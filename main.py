@@ -27,6 +27,7 @@ if description:
     items = new_xml_file.find_invoice_items()
     supplier = new_xml_file.find_party_info_items("supplier")
     customer = new_xml_file.find_party_info_items("customer")
+    
     print(type(items))
     print(type(supplier))
     print(type(customer))

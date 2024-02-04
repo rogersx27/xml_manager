@@ -35,30 +35,35 @@ class XMLProcessor:
             finded_root = self.root.findall('.//cbc:Description', namespaces={'cbc': UBL_NAMESPACE})
             self.description = finded_root[0].text if finded_root else None
         except IndexError:
-            return "XML sin etiquetas <cbc:Description>"
+            handle_exception('find_root_description')
+            self.description = "XML sin etiquetas <cbc:Description>"
 
     def find_qr_code(self):
         try:
             qrcode_element = self.root.find('.//sts:QRCode', namespaces={'sts': DIAN_NAMESPACE})
             return qrcode_element.text if qrcode_element is not None else "QRCode no encontrado en el XML"
         except IndexError:
-            return "XML sin etiquetas <sts:QRCode>"
+            self.handle_exception('find_qr_code')
 
     def find_invoice_items(self):
         try:
+            # Extract taf InvoiceLine from the XML file
             invoice_items = self.root.findall('.//cac:InvoiceLine', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE})
 
+            # If InvoiceLine is found, extract the information
             if invoice_items:
+                # Extract the information from each InvoiceLine and return a list of dictionaries
                 items = [self.extract_invoice_line_info(
                     item) for item in invoice_items]
-                return items
+                return items # <-- that's a list of dictionaries :D
             else:
+                # If InvoiceLine is not found, return a list with the other items
                 data = [self.other_items()]
-                return data
+                return data # <-- that's a list with a dictionary x2
 
         except IndexError:
-            self.handle_exception('InvoiceLine')
+            self.handle_exception('find_invoice_items')
 
     def other_items(self) -> dict:
         credit_note_item_info = {}
@@ -68,7 +73,9 @@ class XMLProcessor:
             CreditNoteLine = self.root.find('.//cac:CreditNoteLine', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE
             })
+            # If CreditNoteLine is found, extract the information
             if CreditNoteLine is not None:
+                # Extract the information from CreditNoteLine and return a dictionary
                 credit_note_item_info = {
                     'Description': CreditNoteLine.find('.//cac:Item/cbc:Description', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
                     'StandardItemIdentification': {
@@ -76,6 +83,7 @@ class XMLProcessor:
                     }
                 }
         except Exception as e:
+            # If CreditNoteLine is not found, return an error message
             self.handle_exception('CreditNoteLine', e)
 
         return credit_note_item_info
@@ -83,14 +91,17 @@ class XMLProcessor:
     def find_party_info_items(self, party_type: str):
         party_type = party_type.lower()
         try:
+            # Extract Party from the XML file
             party_info_items = self.root.findall('.//cac:Party', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE
             })
 
+            # If Party is found, extract the information
             if party_info_items:
+                # Extract the information from each Party and return a list of dictionaries
                 if party_type == "supplier":
                     supplier = [self.extract_party_info(party_info_items[0])]
-                    return supplier
+                    return supplier # <-- that's a list with a dictionary
                 elif party_type == "customer":
                     customer = [self.extract_party_info(party_info_items[1])]
                     return customer
@@ -196,10 +207,10 @@ class XMLProcessor:
         return invoice_line_info
 
     def extract_party_info(self, xml_item: str) -> dict:
-        party_info = {}
+        party_info = {} # <-- that dictionary
 
         try:
-            # Extraemos información de PartyName
+            # Extract PartyName
             party_name = xml_item.find('.//cac:PartyName/cbc:Name', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
@@ -210,7 +221,7 @@ class XMLProcessor:
             self.handle_exception('PartyName', e)
 
         try:
-            # Extraemos información de PhysicalLocation
+            # Extract physical_location
             physical_location = xml_item.find('.//cac:PhysicalLocation/cac:Address', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
@@ -228,7 +239,7 @@ class XMLProcessor:
             self.handle_exception('PhysicalLocation', e)
 
         try:
-            # Extraemos información de PartyTaxScheme
+            # Extract tax_scheme
             tax_scheme = xml_item.find('.//cac:PartyTaxScheme/cac:TaxScheme', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
@@ -242,7 +253,7 @@ class XMLProcessor:
             self.handle_exception('PartyTaxScheme', e)
 
         try:
-            # Extraemos información de PartyLegalEntity
+            # Extract PartyLegalEntity
             legal_entity = xml_item.find('.//cac:PartyLegalEntity', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
@@ -258,7 +269,7 @@ class XMLProcessor:
             self.handle_exception('PartyLegalEntity', e)
 
         try:
-            # Extraemos información de Contact
+            # Extract Contact
             contact = xml_item.find('.//cac:Contact', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
@@ -271,10 +282,11 @@ class XMLProcessor:
         except Exception as e:
             self.handle_exception('Contact', e)
 
-        return party_info
+        return party_info # <-- that's a dictionary we are returning up there
 
     def handle_exception(self, section_name: str, exception: Exception):
-        print(f"Error en la sección {section_name}: {str(exception)}")
+        # Print the error message
+        print(f"Error in the section {section_name}: {str(exception)}")
 
 # ------------------------------------------------------------------------------------------- #
 # XMLFileCreator class create a new XML file with the content in the XML description element  #
@@ -282,24 +294,33 @@ class XMLProcessor:
 
 
 class XMLFileCreator:
+    # Constructor
+    # XMLFileCreator class receives the description of the XML file and the original file name
     def __init__(self, xml_processor: XMLProcessor):
         self.description = xml_processor.description
-        self.original_file_name = os.path.splitext(os.path.basename(xml_processor.xml_file))[0]
+        # Extract the original file name without the extension
+        self.original_file_name = os.path.splitext(os.path.basename(xml_processor.xml_file))[0] # <- that's the original file name
 
+    # destination_folder is the folder where the new XML file will be created
     def create_file(self, destination_folder):
+        # Create a new XML file with the description
         prefix = self.original_file_name[:7]
-        path_copies_file = os.path.join(destination_folder, f"copia-{prefix}.xml")
+        path_copies_file = os.path.join(destination_folder, f"copia-{prefix}.xml") # <- that's the path of the new file
 
-        os.makedirs(os.path.dirname(path_copies_file), exist_ok=True)
+        os.makedirs(os.path.dirname(path_copies_file), exist_ok=True) # <- that's the new folder
 
         with open(path_copies_file, 'w', encoding='utf-8') as new_file:
+            # Write the description in the new XML file
             new_file.write(self.description)
 
-        print(f"Contenido copiado y pegado en '{path_copies_file}'")
+        print(f"Contenido copiado y pegado en '{path_copies_file}'") # <- that's the message we are printing
 
-        return path_copies_file
+        return path_copies_file # <- that's the path of the new file
 
     def create_csv_file(self):
+        # THIS PART OF THE CODE IS IN PROGRESS
+        # WORKS IN ITSELF, BUT NOT IN THE INTERFAZ PROGRAM
+        # ? IN WORKING .....
         try:
             data_list = self.text
             item = input("Ingrese el nombre del ítem: ")

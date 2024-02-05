@@ -1,7 +1,6 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
-import xml.etree.ElementTree as ET
 from classes import XMLProcessor, XMLFileCreator
 
 class GUI(tk.Tk):

@@ -317,45 +317,46 @@ class XMLFileCreator:
 
         return path_copies_file # <- that's the path of the new file
 
-    def create_csv_file(self):
-        # THIS PART OF THE CODE IS IN PROGRESS
-        # WORKS IN ITSELF, BUT NOT IN THE INTERFAZ PROGRAM
-        # ? IN WORKING .....
+    # Function to create a CSV file
+    def create_csv_file(self, destination_folder: str, data: str, name: str):
         try:
-            data_list = self.text
-            item = input("Ingrese el nombre del ítem: ")
-            prefix = self.original_file_name[:7]
+            data_list = data
 
-            # Cambia la extensión del archivo a .csv
-            path_csv_file = os.path.join(
-                'source', 'csv', f"csv-{prefix}-{item}.csv")
+            # If the data is a list, create a CSV file
+            if data_list:
+                # Create a new CSV file with the data
+                path_copies_file = os.path.join(destination_folder, f"csv-{name}.csv") # <- that's the path of the new file
 
-            os.makedirs(os.path.dirname(path_csv_file), exist_ok=True)
+                os.makedirs(os.path.dirname(path_copies_file), exist_ok=True) # <- that's the new folder
 
-            # Abre el archivo CSV en modo de escritura
-            with open(path_csv_file, 'w', newline='', encoding='utf-8') as csvfile:
-                # Escribe el BOM (Byte Order Mark) para garantizar UTF-8 con BOM
-                csvfile.write('\ufeff')
+                # Open the new CSV file and write the data
+                with open(path_copies_file, 'w', newline='', encoding='utf-8') as csvfile:
+                    # Write the BOM character to ensure that the CSV file is opened correctly
+                    csvfile.write('\ufeff')
 
-                # Asegura que cada elemento en data_list sea un diccionario
-                data_list = [item if isinstance(
-                    item, dict) else dict(item) for item in data_list]
+                    # Ensures that each element in datalist is a dictionary
+                    data_list = [item if isinstance(
+                        item, dict) else dict(item) for item in data_list]
 
-                # Verifica si data_list no está vacío
-                if data_list:
-                    # Define los encabezados del CSV basados en las claves del primer diccionario en la lista
-                    fieldnames = data_list[0].keys()
+                    # Verify that the list is not empty
+                    if data_list:
+                        # Define the field names for the CSV file
+                        fieldnames = data_list[0].keys()
 
-                    # Crea el objeto escritor CSV
-                    csv_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                        # Create a CSV writer object
+                        csv_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-                    # Escribe los encabezados en el archivo
-                    csv_writer.writeheader()
+                        # Write the field names in the CSV file
+                        csv_writer.writeheader()
 
-                    # Escribe cada diccionario en la lista como una fila en el archivo
-                    csv_writer.writerows(data_list)
+                        # Write the data in the CSV file
+                        csv_writer.writerows(data_list)
 
-                    print(f"Archivo CSV creado con éxito en: {path_csv_file}")
-
+                        print(f"Contenido copiado y pegado en '{path_copies_file}'")
+                        
+                        return path_copies_file # <- that's the path of the new file
+            else:
+                print("No se encontró la etiqueta <sts:Party> en el archivo XML")
+                
         except Exception as e:
             print(f"Error al crear el archivo CSV: {str(e)}")

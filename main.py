@@ -14,7 +14,7 @@ from classes import XMLProcessor, XMLFileCreator
     
 if __name__ == '__main__':
         
-    # Creating a new XMLProcessor object
+    # Creating a XMLProcessor object
     xml_file_original = XMLProcessor(variables.XML1["file"])
     xml_file_original.parse_xml()
 

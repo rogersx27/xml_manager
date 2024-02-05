@@ -66,7 +66,7 @@ class XMLProcessor:
             self.handle_exception('find_invoice_items')
 
     def other_items(self) -> dict:
-        credit_note_item_info = {}
+        credit_note_item_info = {} # <-- that dictionary
 
         try:
             # Extract CreditNoteLine
@@ -86,7 +86,7 @@ class XMLProcessor:
             # If CreditNoteLine is not found, return an error message
             self.handle_exception('CreditNoteLine', e)
 
-        return credit_note_item_info
+        return credit_note_item_info # <-- that's a dictionary we are returning up there
 
     def find_party_info_items(self, party_type: str):
         party_type = party_type.lower()
@@ -111,7 +111,7 @@ class XMLProcessor:
             return "XML sin etiquetas <sts:Party>"
 
     def extract_invoice_line_info(self, xml_item: str) -> dict:
-        invoice_line_info = {}
+        invoice_line_info = {} # <-- that dictionary
 
         try:
             # Extract ID and InvoicedQuantity
@@ -204,7 +204,7 @@ class XMLProcessor:
         except Exception as e:
             self.handle_exception('Price', e)
 
-        return invoice_line_info
+        return invoice_line_info # <-- that's a dictionary we are returning up there
 
     def extract_party_info(self, xml_item: str) -> dict:
         party_info = {} # <-- that dictionary

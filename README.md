@@ -10,9 +10,9 @@ Específicamente, un IndexError se produce cuando intentamos acceder a un índic
 
 Sí, de hecho es una buena practica bien conocida llamada principio de responsabilidad única, así que podemos decir que estamos siguiendo el principio de diseño conocido como Separación de Responsabilidades y utilizando el patrón Singleton de forma implícita, aunque esta última no se aplica de manera estrcita (que normalmente implica una única instancia de una clase).
 
-- La clase *XMLProcessor* se encarga específicamente de procesar y extraer información de un archivo XML. Su responsabilidad es <u>analizar la estructura</u>  XML y proporcionar métodos para <u>acceder a datos específicos</u>.
+- La clase *XMLProcessor* se encarga específicamente de procesar y extraer información de un archivo XML. Su responsabilidad es __analizar la estructura__  XML y proporcionar métodos para __acceder a datos específicos__.
 
-- La clase *XMLFileCreator* se encarga de crear una copia del contenido del archivo XML  	procesado. Su responsabilidad está centrada en la <u>manipulación y creación de archivos</u>.
+- La clase *XMLFileCreator* se encarga de crear una copia del contenido del archivo XML procesado. Su responsabilidad está centrada en la __manipulación y creación de archivos__.
 
 # Documentación de Constantes 🎉
 

@@ -1,0 +1,11 @@
+name: xml-processor-env
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - tkinter
+  - pip
+  - pip:
+    - numpy
+    - pandas
+    - openpyxl

@@ -3,9 +3,8 @@ channels:
   - defaults
 dependencies:
   - python=3.8
-  - tkinter
   - pip
-  - pip:
-    - numpy
-    - pandas
-    - openpyxl
+  - numpy
+  - pandas
+  - openpyxl
+

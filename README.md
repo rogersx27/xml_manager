@@ -50,7 +50,7 @@ Es una interfaz gráfica de usuario (GUI) desarrollada en Python utilizando la b
 
 **Descripción**: Representa el espacio de nombres utilizado por la Dirección de Impuestos y Aduanas Nacionales (DIAN) de Colombia para la factura electrónica en la versión 2.1 de la estructura.
 
-**Valor**
+**Valor:**
 
  	dian:gov:co:facturaelectronica:Structures-2-1
 

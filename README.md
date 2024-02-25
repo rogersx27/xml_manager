@@ -1,12 +1,34 @@
-# Explicaciones
+# XML Processor GUI
 
-#### ¿Dos o más clases que puedan manejar el mismo archivo instaciado?
+## Descripción 🔊
+Es una interfaz gráfica de usuario (GUI) desarrollada en Python utilizando la biblioteca Tkinter. Esta interfaz permite procesar archivos XML, realizar diversas operaciones con ellos, y manipular archivos CSV.
 
-Sí, he estado siguiendo el principio de diseño conocido como Separación de Responsabilidades y utilizando el patrón Singleton de forma implícita, aunque esta última no se aplica de manera estricta (que normalmente implica una única instancia de una clase).
+## Requisitos 🧷
+- Python 3.x instalado en el sistema.
+- Bibliotecas necesarias: tkinter.
 
-- La clase *XMLProcessor* se encarga específicamente de procesar y extraer información de un archivo XML. Su responsabilidad es __analizar la estructura__  XML y proporcionar métodos para __acceder a datos específicos__.
+## Instrucciones de Uso 🏁
+1. Ejecute el script `interfaz.py` para iniciar la aplicación.
+2. Una vez que la aplicación esté abierta, puede realizar las siguientes acciones:
 
-- La clase *XMLFileCreator* se encarga de crear una copia del contenido del archivo XML procesado. Su responsabilidad está centrada en la __manipulación y creación de archivos__.
+    - **Seleccionar Archivo XML**: Haga clic en este botón para seleccionar un archivo XML para procesar.
+    - **Actualizar**: Actualiza la lista de archivos mostrados.
+    - **Eliminar**: Elimina el archivo seleccionado de la lista.
+    - **Encontrar QR**: Encuentra el código QR en el archivo XML seleccionado.
+    - **Encontrar Items**: Encuentra los elementos en el archivo XML seleccionado y crea un archivo CSV.
+    - **Encontrar Información**: Permite seleccionar el tipo de partido (Supplier o Customer) y crea un archivo CSV con la información correspondiente.
+
+## Estructura de Carpetas 📁
+- **copies**: Esta carpeta contiene copias de los archivos XML procesados.
+- **csv**: Esta carpeta contiene archivos CSV generados.
+
+## Funcionalidades Adicionales 🎨
+- **Seleccionar Carpeta para CSV**: Permite al usuario seleccionar una carpeta donde se guardarán los archivos CSV generados.
+
+## Notas 🗒
+- La aplicación también proporciona una funcionalidad para crear automáticamente las carpetas necesarias si no existen.
+- Los botones "Encontrar QR", "Encontrar Items" y "Encontrar Información" están deshabilitados hasta que se seleccione un archivo XML.
+- Para obtener más detalles sobre el código y las funciones, consulte los comentarios en el script `interfaz.py`.
 
 # Documentación de Constantes 🎉
 
@@ -14,19 +36,9 @@ Sí, he estado siguiendo el principio de diseño conocido como Separación de Re
 
 **Descripción**: Representa el espacio de nombres utilizado en el estándar Universal Business Language (UBL) para los Componentes Básicos Comunes (Common Basic Components).
 
-**Valor**
+**Valores de ejemplo:**
 
  	urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2
-
-**Uso**: Esta constante se utiliza al buscar elementos específicos en archivos XML que siguen el estándar UBL.
-
-------------
-
-- <h3 style = "color: green">UBL_AGGREGATE_NAMESPACE</h3>
-
-**Descripción**: Representa el espacio de nombres utilizado en el estándar Universal Business Language (UBL) para los Componentes Agregados Comunes (Common Aggregate Components).
-
-**Valor**
 
  	urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2
 

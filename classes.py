@@ -35,15 +35,15 @@ class XMLProcessor:
             finded_root = self.root.findall('.//cbc:Description', namespaces={'cbc': UBL_NAMESPACE})
             self.description = finded_root[0].text if finded_root else None
         except IndexError:
-            handle_exception('find_root_description')
+            self.handle_exception('find_root_description')
             self.description = "XML sin etiquetas <cbc:Description>"
 
     def find_qr_code(self):
         try:
             qrcode_element = self.root.find('.//sts:QRCode', namespaces={'sts': DIAN_NAMESPACE})
             return qrcode_element.text if qrcode_element is not None else "QRCode no encontrado en el XML"
-        except IndexError:
-            self.handle_exception('find_qr_code')
+        except Exception as e:
+            self.handle_exception('find_qr_code', e)
 
     def find_invoice_items(self):
         try:
@@ -62,8 +62,8 @@ class XMLProcessor:
                 data = [self.other_items()]
                 return data # <-- that's a list with a dictionary x2
 
-        except IndexError:
-            self.handle_exception('find_invoice_items')
+        except Exception as e:
+            self.handle_exception('find_invoice_items', e)
 
     def other_items(self) -> dict:
         credit_note_item_info = {} # <-- that dictionary
@@ -107,9 +107,9 @@ class XMLProcessor:
                     return customer
             else:
                 print("No se encontró la etiqueta <sts:Party> en el archivo XML")
-        except IndexError:
-            return "XML sin etiquetas <sts:Party>"
-
+        except Exception as e:
+            self.handle_exception('find_party_info_items', e)
+            
     def extract_invoice_line_info(self, xml_item: str) -> dict:
         invoice_line_info = {} # <-- that dictionary
 

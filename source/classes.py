@@ -10,8 +10,16 @@ import xml.etree.ElementTree as ET
 # Constants for Namespaces                                             #
 # -------------------------------------------------------------------- #
 
-UBL_NAMESPACE = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
+"""
+'cac': UBL_AGGREGATE_NAMESPACE,
+'cbc': UBL_NAMESPACE
+
+urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2
+urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2
+"""
+
 UBL_AGGREGATE_NAMESPACE = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2'
+UBL_NAMESPACE = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
 DIAN_NAMESPACE = 'dian:gov:co:facturaelectronica:Structures-2-1'
 
 # ---------------------------------------------------------------------------------------------------
@@ -27,15 +35,25 @@ class XMLProcessor:
         self.description = None
 
     def parse_xml(self):
-        self.tree = ET.parse(self.xml_file)
-        self.root = self.tree.getroot()
+        try:
+            self.tree = ET.parse(self.xml_file)
+            self.root = self.tree.getroot()
+        except Exception as e:
+            self.handle_exception('parse xml', e)
 
     def find_root_description(self):
         try:
+            # TODO: Find the type of XML file (Invoice or CreditNote)
+            # xml_invoice = self.root.find('.//Invoice')
+            # xml_credit_note = self.root.find('.//CreditNote')
+            
+            # print(f'Es invoice:{xml_invoice}')
+            # print(f'Es creditNote: {xml_credit_note}')
+            
             finded_root = self.root.findall('.//cbc:Description', namespaces={'cbc': UBL_NAMESPACE})
             self.description = finded_root[0].text if finded_root else None
-        except IndexError:
-            self.handle_exception('find_root_description')
+        except Exception as e:
+            self.handle_exception('find_root_description', e)
             self.description = "XML sin etiquetas <cbc:Description>"
 
     def find_qr_code(self):
@@ -48,43 +66,78 @@ class XMLProcessor:
     def find_invoice_items(self):
         try:
             # Extract taf InvoiceLine from the XML file
-            invoice_items = self.root.findall('.//cac:InvoiceLine', namespaces={
-                'cac': UBL_AGGREGATE_NAMESPACE})
+            invoice_items = self.root.findall('.//cac:InvoiceLine', 
+                                              namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE})
+            
+            # Extract the CreditNoteLine from the XML file
+            credit_note_items = self.root.findall('.//cac:CreditNoteLine', 
+                                               namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE})
 
             # If InvoiceLine is found, extract the information
             if invoice_items:
                 # Extract the information from each InvoiceLine and return a list of dictionaries
-                items = [self.extract_invoice_line_info(
-                    item) for item in invoice_items]
+                items = [ self.extract_invoice_line_info(invoice_item) for invoice_item in invoice_items ]
                 return items # <-- that's a list of dictionaries :D
-            else:
+            
+            # If CreditNoteLine is found, extract the information
+            if credit_note_items:
                 # If InvoiceLine is not found, return a list with the other items
-                data = [self.other_items()]
+                data = [self.other_items(credit_item) for credit_item in credit_note_items]
                 return data # <-- that's a list with a dictionary x2
 
+            
         except Exception as e:
             self.handle_exception('find_invoice_items', e)
 
-    def other_items(self) -> dict:
+    def other_items(self, xml_item: str) -> dict:
         credit_note_item_info = {} # <-- that dictionary
-
+        
+        
         try:
-            # Extract CreditNoteLine
-            CreditNoteLine = self.root.find('.//cac:CreditNoteLine', namespaces={
-                'cac': UBL_AGGREGATE_NAMESPACE
-            })
-            # If CreditNoteLine is found, extract the information
-            if CreditNoteLine is not None:
-                # Extract the information from CreditNoteLine and return a dictionary
-                credit_note_item_info = {
-                    'Description': CreditNoteLine.find('.//cac:Item/cbc:Description', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+            # Extract ID 
+            credit_note_item_info['ID'] = xml_item.find('.//cbc:ID', namespaces={'cbc': UBL_NAMESPACE}).text
+        except Exception as e :
+            self.handle_exception('ID Credit Note', e)
+            
+        try:
+            # Extract CreditedQuantity
+            credit_note_item_info['CreditedQuantity'] = xml_item.find('.//cbc:CreditedQuantity', namespaces={'cbc': UBL_NAMESPACE}).text
+        except Exception as e :
+            self.handle_exception('CreditedQuantity Credit Note', e)
+            
+        try:
+            # Extract LineExtensionAmount
+            credit_note_item_info['LineExtensionAmount'] = xml_item.find('.//cbc:LineExtensionAmount', namespaces={'cbc': UBL_NAMESPACE}).text
+        except Exception as e :
+            self.handle_exception('LineExtensionAmount Credit Note', e)
+            
+        try:
+            # Extract Item
+            item = xml_item.find('.//cac:Item', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE})
+            if item is not None:
+                credit_note_item_info['Item'] = {
+                    'Description': item.find('.//cbc:Description', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                    
+                    # NO FUNCIONA
+                    # 'Description': item.find('.//cac:Item/cbc:Description', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text, <- NO FUNCIONA
+                    
                     'StandardItemIdentification': {
-                        'ID': CreditNoteLine.find('.//cac:Item/cac:StandardItemIdentification/cbc:ID', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                        'ID': item.find('.//cac:StandardItemIdentification/cbc:ID', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
                     }
                 }
-        except Exception as e:
-            # If CreditNoteLine is not found, return an error message
-            self.handle_exception('CreditNoteLine', e)
+        except Exception as e :
+            self.handle_exception('Item Credit Note', e)
+            
+        try:
+            # Extract Price
+            price = xml_item.find('.//cac:Price', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE})
+            if price is not None:
+                credit_note_item_info['Price'] = {
+                    'PriceAmount': price.find('.//cbc:PriceAmount', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                    'BaseQuantity': price.find('.//cbc:BaseQuantity', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text
+                }
+        except Exception as e :
+            self.handle_exception('Price Credit Note', e)
 
         return credit_note_item_info # <-- that's a dictionary we are returning up there
 
@@ -131,26 +184,28 @@ class XMLProcessor:
 
         try:
             # Extract FreeOfChargeIndicator
-            invoice_line_info['FreeOfChargeIndicator'] = xml_item.find('.//cbc:FreeOfChargeIndicator', namespaces={
+            free_of_charge_indicator = xml_item.find('.//cbc:FreeOfChargeIndicator', namespaces={
                 'cbc': UBL_NAMESPACE
             }).text
+            if free_of_charge_indicator is not None:
+                invoice_line_info['FreeOfChargeIndicator'] = free_of_charge_indicator
         except Exception as e:
             self.handle_exception('FreeOfChargeIndicator', e)
 
         try:
-            # Extract TaxTotal
+            # ? Extract TaxTotal
             tax_total = xml_item.find('.//cac:TaxTotal', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
             })
             if tax_total is not None:
                 invoice_line_info['TaxTotal'] = {
-                    'TaxAmount': tax_total.find('.//cbc:TaxAmount', namespaces={'cbc': UBL_NAMESPACE}).text,
+                    'TaxAmount': tax_total.find('.//cbc:TaxAmount', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
                     'TaxSubtotal': {
-                        'TaxableAmount': tax_total.find('.//cbc:TaxableAmount', namespaces={'cbc': UBL_NAMESPACE}).text,
-                        'TaxAmount': tax_total.find('.//cbc:TaxAmount', namespaces={'cbc': UBL_NAMESPACE}).text,
+                        'TaxableAmount': tax_total.find('.//cbc:TaxableAmount', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                        'TaxAmount': tax_total.find('.//cbc:TaxAmount', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
                         'TaxCategory': {
-                            'Percent': tax_total.find('.//cbc:Percent', namespaces={'cbc': UBL_NAMESPACE}).text,
+                            'Percent': tax_total.find('.//cbc:Percent', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
                             'TaxScheme': {
                                 'Name': tax_total.find('.//cac:TaxScheme/cbc:Name', namespaces={'cac': UBL_AGGREGATE_NAMESPACE,
                                                                                                 'cbc': UBL_NAMESPACE}).text
@@ -162,29 +217,44 @@ class XMLProcessor:
             self.handle_exception('TaxTotal', e)
 
         try:
-            # Extract Item
-            item = xml_item.find('.//cac:Item', namespaces={
+            # ? Extract Item
+            product = xml_item.find('.//cac:Item', namespaces={
+                'cac': UBL_AGGREGATE_NAMESPACE,
+                'cbc': UBL_NAMESPACE,
+            })
+            if product is not None:
+                invoice_line_info['Item'] = {
+                    'Description': product.find('.//cbc:Description', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                    # 'SellersItemIdentification': {
+                    #     'ID': product.find('.//cac:SellersItemIdentification/cbc:ID', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text
+                    # },
+                    'StandardItemIdentification': {
+                        'ID': product.find('.//cac:StandardItemIdentification/cbc:ID', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                    },
+                    # 'AdditionalItemProperty': {
+                    #     'Name': product.find('.//cac:AdditionalItemProperty/cbc:Name', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                    #     'Value': product.find('.//cac:AdditionalItemProperty/cbc:Value', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text
+                    # }
+                }
+            else:
+                raise ValueError("La etiqueta <cac:Item> no se encontró en la factura electrónica.")
+        except Exception as e:
+            self.handle_exception('Item', e)
+            
+        try:
+            # Extract AdditionalItemProperty
+            additional_item_property = xml_item.find('.//cac:Item/cac:AdditionalItemProperty', namespaces={
                 'cac': UBL_AGGREGATE_NAMESPACE,
                 'cbc': UBL_NAMESPACE
             })
-            if item is not None:
-                invoice_line_info['Item'] = {
-                    'Description': item.find('.//cbc:Description', namespaces={'cbc': UBL_NAMESPACE}).text,
-                    'AdditionalItemProperty': {
-                        'Name': item.find('.//cac:AdditionalItemProperty/cbc:Name', namespaces={'cac': UBL_AGGREGATE_NAMESPACE,
-                                                                                                'cbc': UBL_NAMESPACE}).text,
-
-                        'Value': item.find('.//cac:AdditionalItemProperty/cbc:Value', namespaces={'cac': UBL_AGGREGATE_NAMESPACE,
-                                                                                                  'cbc': UBL_NAMESPACE}).text
-                    },
-                    'OriginAddress': {
-                        'ID': item.find('.//cac:OriginAddress/cbc:ID', namespaces={'cac': UBL_AGGREGATE_NAMESPACE,
-                                                                                   'cbc': UBL_NAMESPACE}).text
-                    }
+            if additional_item_property is not None:
+                invoice_line_info['AdditionalItemProperty'] = {
+                    'Name': additional_item_property.find('.//cbc:Name', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                    'Value': additional_item_property.find('.//cbc:Value', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text
                 }
         except Exception as e:
-            self.handle_exception('Item', e)
-
+            self.handle_exception('Item AdditionalItemProperty', e)
+            
         try:
             # Extract Price
             price = xml_item.find('.//cac:Price', namespaces={
@@ -194,11 +264,11 @@ class XMLProcessor:
             if price is not None:
                 invoice_line_info['Price'] = {
                     'PriceAmount': {
-                        'value': price.find('.//cbc:PriceAmount', namespaces={'cbc': UBL_NAMESPACE}).text,
-                        'CurrencyID': price.find('.//cbc:PriceAmount', namespaces={'cbc': UBL_NAMESPACE}).get('CurrencyID')
+                        'value': price.find('.//cbc:PriceAmount', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
+                        'CurrencyID': price.find('.//cbc:PriceAmount', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).get('CurrencyID')
                     },
                     'BaseQuantity': {
-                        'value': price.find('.//cbc:BaseQuantity', namespaces={'cbc': UBL_NAMESPACE}).text,
+                        'value': price.find('.//cbc:BaseQuantity', namespaces={'cac': UBL_AGGREGATE_NAMESPACE, 'cbc': UBL_NAMESPACE}).text,
                     }
                 }
         except Exception as e:
@@ -285,6 +355,11 @@ class XMLProcessor:
         return party_info # <-- that's a dictionary we are returning up there
 
     def handle_exception(self, section_name: str, exception: Exception):
+        if section_name == 'Invoice':
+            print(f"|Error al analizar el archivo XML: {str(exception)}")
+            print("||-Asegúrese de que el archivo XML esté bien formado y no esté dañado.")
+            print("||--Asegúrese de que el archivo XML no esté vacío.")
+            print("||---Asegúrese de que el archivo XML sí sea una factura electrónica.")
         # Print the error message
         print(f"Error in the section {section_name}: {str(exception)}")
 
@@ -304,8 +379,8 @@ class XMLFileCreator:
     # destination_folder is the folder where the new XML file will be created
     def create_file(self, destination_folder):
         # Create a new XML file with the description
-        prefix = self.original_file_name[:7]
-        path_copies_file = os.path.join(destination_folder, f"copia-{prefix}.xml") # <- that's the path of the new file
+        prefix = self.original_file_name
+        path_copies_file = os.path.join(destination_folder, f"{prefix}.xml") # <- that's the path of the new file
 
         os.makedirs(os.path.dirname(path_copies_file), exist_ok=True) # <- that's the new folder
 
@@ -360,3 +435,9 @@ class XMLFileCreator:
                 
         except Exception as e:
             print(f"Error al crear el archivo CSV: {str(e)}")
+
+
+"""
+
+
+"""

@@ -6,7 +6,11 @@ from tkinter import ttk
 
 from classes import XMLProcessor, XMLFileCreator
 
-# TODO: Class to select the type of party (move to a separate file)
+   # !!!
+   # TODO: Add a function to open the CSV file or any other file
+   # TODO: Class to select the type of party (move to a separate folder)
+   # !!!
+   
 class PartyTypeDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -344,10 +348,8 @@ class GUI(tk.Tk):
             else:
                 print("No se seleccionó ninguna carpeta para los archivos CSV.")
 
-    # !!!
-    # TODO: Add a function to open the CSV file or any other file
-    # !!!
     
 if __name__ == "__main__":
     app = GUI()
     app.mainloop()
+    
